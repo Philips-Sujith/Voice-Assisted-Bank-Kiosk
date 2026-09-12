@@ -1,425 +1,346 @@
-# AI-Based Voice-Assisted Banking Kiosk
+# AI Voice-Assisted Banking Kiosk
 
-An integrated AI-powered banking kiosk prototype combining hands-free voice assistance, biometric face authentication with anti-spoofing liveness detection, cryptographically secured QR-based transaction handoff, automated queue management, and teller-side transaction verification.
-
----
-
-## 👥 Team
-
-1. **Sujith B**
-2. **Gokul M**
-3. **Sri Harish Kumar S**
-4. **Tharnikaa Balakrishnan**
-5. **Gopika M**
-6. **Jaya Mathanesh C**
+An enterprise-grade, accessible, service-oriented banking kiosk platform engineered to eliminate literacy, language, and operational friction in retail bank branches through vernacular voice AI, contactless biometric authentication, and cryptographically verified teller workflows.
 
 ---
 
-## 📌 Project Overview
+## 1. Project Overview
 
-Modern banking interfaces often pose accessibility barriers for senior citizens, individuals with visual or motor impairments, and users unfamiliar with complex menu-driven digital kiosks. Traditional ATM and kiosk workflows rely heavily on repetitive screen taps, rigid navigation hierarchies, and manual card or PIN entry.
+The **AI Voice-Assisted Banking Kiosk** is an integrated omnichannel branch automation solution. It bridges the accessibility gap for elderly, low-literacy, and rural customers who struggle with traditional ATM interfaces or handwritten paper slips.
 
-The **AI-Based Voice-Assisted Banking Kiosk** re-imagines customer self-service banking by introducing:
-- **Biometric Face Authentication**: Password-free, card-free identity verification backed by dual-stage neural networks (YuNet face detection + ArcFace feature recognition) and real-time anti-spoofing liveness checks (MiniFASNet).
-- **Natural Voice Interaction**: Voice-driven command navigation, balance inquiries, cash deposits, and cash withdrawals powered by real-time speech recognition, intent classification, and responsive Text-to-Speech (TTS) audio prompts.
-- **Cryptographic Security QR Verification**: Generating short-lived, tamper-evident HMAC-SHA256 security tokens encoded into scannable QR receipts. Customers transition seamlessly from self-service kiosk to staff counters without verbal repetition or physical slip exchange.
-- **Dual-Receipt Lifecycle**: Clean, standardized customer transaction receipts with dynamic QR tokens paired with verified teller acknowledgement receipts upon staff-side redemption.
-
-> **Disclaimer**: This project is an academic and engineering prototype designed for demonstration, hackathons, and technical evaluation. It uses synthetic mock customer records and isolated local services, and is not connected to any live production banking network.
+By orchestrating real-time vernacular speech-to-text, natural language intent recognition, on-device facial anti-spoofing biometrics, and HMAC-SHA256 one-time digital transaction tokens, the platform transitions walk-in banking counter encounters from an average of **4 minutes down to under 30 seconds**.
 
 ---
 
-## 🚀 Key Features
+## 2. Key Capabilities
 
-### 1. Customer Kiosk (Module 1)
-- **Voice-Driven Navigation**: Complete end-to-end banking transactions without mandatory touch input.
-- **Flexible Transaction Handling**: Guided deposit, withdrawal, and balance inquiry workflows with clear visual and auditory feedback.
-- **Live Confirmation & Numeric Keypad**: Visual confirmation cards with amount breakdown and manual correction keypad.
-- **Customer Transaction Receipt**: High-contrast, compact, centered receipt displaying transaction details, issued timestamp, expiration window, and cryptographic QR token.
-
-### 2. Face Authentication (Module 4)
-- **Fast Face Detection**: Powered by OpenCV's YuNet ONNX model for high-speed face detection across varying lighting angles.
-- **Anti-Spoofing & Liveness Detection**: Employs MiniFASNet dual-model inference to reject printouts, video replays, and digital masks.
-- **Biometric Vector Matching**: ArcFace (buffalo_l w600k_r50) 512-dimensional embedding comparison against registered customer templates.
-- **Separation of Concerns**: Strictly partitioned authentication interface reserved solely for verified account holders.
-
-### 3. Face Enrollment & Demo Passbook System (Separate Workflow)
-- **Dedicated Enrollment Interface**: Isolated route (`/enrollment`) designed for authorized customer onboarding.
-- **Synthetic Passbook Recognition**: Automatic OCR parsing of fictional bank passbooks to auto-fill customer profile details.
-- **10 Fictional Demo Passbook Fixtures**: Pre-generated, distinct passbook templates mapped to synthetic bank accounts (`passbook_01.png` through `passbook_10.png`).
-- **3-Sample Face Capture**: Progressive multi-angle face enrollment storing normalized embeddings into the biometric repository.
-
-### 4. Voice AI (Module 2)
-- **Speech Input & Audio Processing**: Web-based speech capture with fallback speech synthesis.
-- **Intent Parsing & Slot Extraction**: Understands conversational banking requests (e.g., *"I want to deposit five thousand rupees"* or *"Check my account balance"*).
-- **Dual Communication**: Synchronous WebSocket and REST endpoints linking the Kiosk UI and Central Backend.
-
-### 5. Security QR Verification (Module 5)
-- **Cryptographic HMAC-SHA256 Tokenization**: Every transaction payload is signed with a high-entropy key to guarantee payload authenticity and tamper-proofing.
-- **Anti-Replay & Expiration**: Configurable 10-minute Time-To-Live (TTL) with single-use revocation tracking.
-- **Zero Secrets on Client**: The client application receives only the signed token and payload; signing keys and verification logic remain strictly on the backend.
-
-### 6. Staff Portal & Teller Workflow (Module 6)
-- **Live QR Scanner**: Real-time webcam scanning with support for manual token entry and sample QR injection for testing.
-- **Backend Verification**: Immediate verification of token status, customer identity, requested transaction, and account balance.
-- **Teller Approval & Ledger Update**: Secure one-click transaction completion updating central database balances in real-time.
-- **Teller Acknowledgement Receipt**: Clean, minimal, centered confirmation receipt formatted for thermal printers and PDF export.
+- **Vernacular Conversational AI**: Native speech recognition and natural language entity parsing in English, Tamil, and Tanglish (Tamil-English code-switching).
+- **Contactless 2FA Biometric Authentication**: Deep neural network face recognition with multi-sample gallery matching, passive eye-blink liveness verification, and MiniFASNet anti-spoofing.
+- **Dynamic Real-Time Account Ledger**: Instant deposit, withdrawal, and balance reconciliation with persistent SQLite transactional safety.
+- **Cryptographic One-Time QR Tokens**: HMAC-SHA256 signed 1800-second expiring payloads preventing tampering, replay attacks, and man-in-the-middle manipulation.
+- **Dual Thermal Receipt Generation**: High-resolution, professional PDF receipts for customer confirmation and teller counter physical audit trails.
+- **Teller Queue Management & Operations Portal**: Instant webcam and file-upload QR scanning with real-time WebSocket queue updates.
+- **Isolated Face Enrollment & OCR Onboarding**: Passbook OCR verification with multi-angle biometric sample enrollment isolated from the public customer kiosk.
 
 ---
 
-## 🏛️ System Architecture
+## 3. System Architecture
 
-```
-                       ┌─────────────────────────┐
-                       │     Customer Kiosk      │
-                       │   (React / Vite: 5173)  │
-                       └────────────┬────────────┘
-                                    │
-             ┌──────────────────────┼──────────────────────┐
-             ▼                      ▼                      ▼
-    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-    │    Voice AI     │    │ Face Auth /     │    │ Redis In-Memory │
-    │ (FastAPI: 8002) │    │ Enrollment      │    │ Protocol Broker │
-    └─────────────────┘    │ (FastAPI: 8003) │    │  (Port: 6379)   │
-                           └─────────────────┘    └────────┬────────┘
-                                    │                      │
-                                    ▼                      ▼
-                       ┌────────────────────────────────────────┐
-                       │         Central Backend Router         │
-                       │          (FastAPI / Port: 8000)        │
-                       └───────────────────┬────────────────────┘
-                                           │
-                    ┌──────────────────────┴──────────────────────┐
-                    ▼                                             ▼
-         ┌─────────────────────┐                       ┌─────────────────────┐
-         │     Security QR     │                       │    Staff Portal     │
-         │   (FastAPI: 8001)   │                       │(React / Vite: 5174) │
-         └─────────────────────┘                       └──────────┬──────────┘
-                                                                  │
-                                                                  ▼
-                                                          Teller Processing
-```
+The platform is engineered as an integrated service-oriented architecture with decoupled frontends, domain microservices, an embedded protocol broker, and unified persistent storage.
 
-### Module Table & Network Ports
+```mermaid
+flowchart TD
+    subgraph Frontends["Frontend Applications"]
+        CK["Customer Kiosk\n(Port 5173)\nReact + Vite"]
+        TP["Teller Portal\n(Port 5174)\nReact + Vite"]
+        FE["Face Enrollment\n(Route /#face-enrollment)\nReact + Vite"]
+    end
 
-| Module | Service Name | Technology | Port | Primary Responsibility |
-|---|---|---|---|---|
-| **Broker** | Redis Protocol Broker | Python / Embedded | `6379` | Inter-service pub/sub event distribution & queue messaging |
-| **Module 1** | Customer Kiosk | React + Vite | `5173` | Customer-facing voice & touch banking interface |
-| **Module 2** | Voice AI | Python + FastAPI | `8002` | Speech recognition, intent extraction, and voice synthesis |
-| **Module 3** | Central Backend | Python + FastAPI | `8000` | Transaction state machine, customer database, ledger management |
-| **Module 4** | Face Authentication | Python + OpenCV + ONNX | `8003` | Biometric face verification, liveness checks, and enrollment |
-| **Module 5** | Security QR | Python + PyCryptodome | `8001` | HMAC-SHA256 signature generation and single-use validation |
-| **Module 6** | Staff Portal | React + Vite | `5174` | Teller verification interface, QR scanning, and transaction approval |
+    subgraph Microservices["Backend Services"]
+        BA["Banking API\n(Port 8000)\nFastAPI + Transitions FSM"]
+        IS["Identity Service\n(Port 8003)\nInsightFace + YuNet + AntiSpoof"]
+        SS["Security Service\n(Port 8001)\nHMAC-SHA256 + QR Token Engine"]
+        VS["Voice Service\n(Port 8002)\nVernacular STT + Intent Parser"]
+    end
 
----
+    subgraph Infrastructure["Infrastructure & Data"]
+        RB["Redis Protocol Broker\n(Port 6379)\nPub/Sub Event Bus"]
+        DB[(Unified SQLite Database\nbank_kiosk.db)]
+        FIXTURES["Demo Fixtures\n(10 Synthetic Passbooks)"]
+    end
 
-## 💻 Tech Stack
+    %% Customer Flow
+    CK -->|REST /api/v1/session| BA
+    CK -->|REST /face-auth/verify| IS
+    CK -->|WS /ws/audio| VS
+    BA -->|REST /sign| SS
+    BA -->|Pub/Sub Events| RB
+    BA -->|Read / Write| DB
+    IS -->|Vector Match| DB
 
-- **Frontend**: React 18, Vite, JavaScript (ES6+), Vanilla CSS (Custom Design System), HTML5 Canvas.
-- **Backend Services**: Python 3.10+, FastAPI, Uvicorn, Pydantic v2, SQLite3.
-- **Computer Vision & Biometrics**:
-  - **YuNet**: High-performance ONNX face detector (`face_detection_yunet_2023mar.onnx`).
-  - **ArcFace / InsightFace**: Deep face representation embeddings (`w600k_r50.onnx`, `1k3d68.onnx`).
-  - **MiniFASNet**: Real-time anti-spoofing binary classification (`2.7_80x80_MiniFASNetV2.onnx`, `4_0_0_80x80_MiniFASNetV1SE.onnx`).
-- **Cryptography & Security**: PyCryptodome (HMAC-SHA256), URL-safe Base64 token serialization, Single-Use Nonce Validation.
-- **State & Messaging**: In-Memory Redis Protocol Broker, WebSockets, REST APIs.
+    %% Teller Flow
+    TP -->|REST /api/v1/token/verify-qr| BA
+    TP -->|WS /ws/dashboard| BA
+    RB -->|Live Events| BA
 
----
-
-## 📋 System Requirements & Prerequisites
-
-Before running the project, verify that the following prerequisites are installed on your Windows machine:
-
-1. **Operating System**: Windows 10 or Windows 11 (64-bit).
-2. **Python**: Python 3.10, 3.11, or 3.12.
-   - *Ensure **"Add python.exe to PATH"** is checked during installation.*
-3. **Node.js**: Node.js v18.x or v20.x LTS.
-4. **npm**: v9.x or higher (included with Node.js).
-5. **Git & Git LFS**:
-   - Git 2.30+ installed.
-   - Git LFS installed (`git lfs install`).
-6. **Hardware**:
-   - Standard USB or integrated Webcam (required for Face Authentication & QR scanning).
-   - Standard Microphone (required for Voice AI interaction).
-
----
-
-## ⚡ Quick Start: Clone & Run
-
-The repository contains a fully automated, portable launcher for Windows that sets up environments, verifies dependencies, checks model assets, and boots all 6 services with one click.
-
-### Step 1: Clone the Repository
-```cmd
-git clone https://github.com/Philips-Sujith/Voice-Assisted-Bank-Kiosk.git
-cd Voice-Assisted-Bank-Kiosk
-```
-
-### Step 2: Ensure Git LFS Pulled Large Biometric Models
-```cmd
-git lfs pull
-```
-
-### Step 3: Run the All-in-One Demo Launcher
-Double-click `START_DEMO.bat` or execute in Command Prompt / PowerShell:
-```cmd
-START_DEMO.bat
-```
-
-**What the automated launcher does:**
-1. Checks system Python and Node.js versions.
-2. Creates an isolated, local virtual environment (`.venv`).
-3. Installs missing Python dependencies automatically via `setup_env.py`.
-4. Checks frontend `node_modules` and runs `npm install` automatically if needed.
-5. Verifies all 5 ONNX biometric model weights are present.
-6. Launches the Redis protocol broker and all 5 backend Python microservices on their dedicated ports.
-7. Launches the Customer Kiosk (`http://localhost:5173`) and Staff Portal (`http://localhost:5174`).
-8. Automatically opens both portals in your default web browser.
-
-### Step 4: Stop All Services Cleanly
-Whenever you want to stop the demonstration, double-click:
-```cmd
-STOP_DEMO.bat
-```
-This safely shuts down all 6 microservices, frees all occupied ports (`5173`, `5174`, `6379`, `8000`, `8001`, `8002`, `8003`), and cleans runtime temporary PIDs.
-
----
-
-## 🛠️ Manual Startup (Alternative)
-
-If you prefer starting individual microservices manually in separate terminal windows:
-
-### 1. Redis Protocol Broker
-```cmd
-python run_redis.py
-```
-
-### 2. Module 5: Security QR (Port 8001)
-```cmd
-cd AI-Based-Voice-Assisted-Kiosk-Prototype\module5_security
-python app.py
-```
-
-### 3. Module 4: Face Authentication (Port 8003)
-```cmd
-cd AI-Based-Voice-Assisted-Kiosk-Prototype\module4_face_auth
-uvicorn app.main:app --host 127.0.0.1 --port 8003
-```
-
-### 4. Module 3: Central Backend (Port 8000)
-```cmd
-cd AI-Based-Voice-Assisted-Kiosk-Prototype\module3_backend
-uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
-
-### 5. Module 2: Voice AI (Port 8002)
-```cmd
-cd AI-Based-Voice-Assisted-Kiosk-Prototype\module2_voice
-python server.py
-```
-
-### 6. Module 6: Staff Portal Frontend (Port 5174)
-```cmd
-cd AI-Based-Voice-Assisted-Kiosk-Prototype\module6_staff_portal
-npm install
-npm run dev
-```
-
-### 7. Module 1: Customer Kiosk Frontend (Port 5173)
-```cmd
-cd module-repos\Gopika_Module
-npm install
-npm run dev
+    %% Enrollment Flow
+    FE -->|REST /face-enrollment/verify-passbook| BA
+    FE -->|REST /face-enrollment/register-samples| BA
+    BA -->|Passbook Assets| FIXTURES
 ```
 
 ---
 
-## 📝 Complete Transaction Walkthrough
+## 4. Workflows & Lifecycles
 
-```
-[Customer Step]
-1. Open Customer Kiosk (http://localhost:5173).
-2. Look directly into the camera frame. The kiosk runs YuNet face detection and MiniFASNet anti-spoofing.
-3. Upon biometric recognition, the customer is authenticated (e.g., "Sujith").
-4. Click the Voice AI microphone or speak: "Deposit 10,000 rupees" or "Withdraw 5,000 rupees".
-5. The Voice AI classifies intent and populates the transaction card.
-6. Confirm the amount on the numeric confirmation keypad.
-7. Central Backend records the pending transaction and requests an HMAC-signed token from Security QR.
-8. The customer receipt appears, displaying transaction details and the secure QR code.
+### A. Customer Journey
+1. **Welcome & Language Selection**: Customer selects preferred vernacular language (English or Tamil) with audio prompts and high-contrast visuals.
+2. **Contactless Biometrics**: Customer looks into the kiosk camera. Identity Service detects the face, tests liveness/anti-spoofing, and identifies the account.
+3. **Conversational Voice Banking**: Customer speaks naturally (e.g., *"Deposit five thousand rupees"* or *"பத்தாயிரம் ரூபாய் டெபாசிட் செய்"*).
+4. **Visual & Auditory Confirmation**: Kiosk displays structured transaction details and requests final touch or voice confirmation.
+5. **Signed QR & Receipt**: Customer receives an HMAC-signed digital QR token on screen with option to print/download the official transaction receipt.
 
-[Staff Step]
-9. Switch to the Staff Portal (http://localhost:5174).
-10. Login with default demo staff credentials (Staff ID: `STAFF-001`, Password: `Password@123`).
-11. Navigate to the QR Scanner tab.
-12. Present the customer kiosk QR code to the staff webcam (or select the matching sample QR).
-13. Security QR validates the HMAC signature, expiration time, and single-use status.
-14. The teller reviews customer name, transaction type, and amount.
-15. Click "Approve & Complete Transaction". The customer balance updates in the central ledger.
-16. A clean, centered Teller Acknowledgement Receipt is generated for printing or PDF export.
+### B. Authentication & Anti-Spoofing Flow
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer
+    participant Kiosk as Customer Kiosk
+    participant Identity as Identity Service (Port 8003)
+    participant DB as SQLite bank_kiosk.db
+
+    Customer->>Kiosk: Positions face in front of camera
+    Kiosk->>Identity: POST /face-auth/verify (Base64 JPEG Frame)
+    Identity->>Identity: YuNet Face Detection
+    Identity->>Identity: MiniFASNet Anti-Spoofing Check (> 0.50)
+    Identity->>Identity: Eye-Blink Aspect Ratio (EAR) Liveness Check
+    alt Spoof Detected or No Blink
+        Identity-->>Kiosk: 401 Unauthorized ("Liveness check failed")
+    else Liveness Passed
+        Identity->>Identity: InsightFace 512-d Embedding Extraction
+        Identity->>DB: Cosine Similarity Match across Enrolled Gallery
+        alt Match Score >= 0.60
+            Identity-->>Kiosk: 200 OK (customer_id, display_name, score)
+        else Match Score < 0.60
+            Identity-->>Kiosk: 401 Unauthorized ("Face does not match registered records")
+        end
+    end
 ```
+
+### C. Voice Transaction Flow
+1. **Audio Ingestion**: Audio stream captured via Web Audio API and transmitted via `WS /ws/audio` to the Voice Service.
+2. **Vernacular Transcription**: Audio decoded into natural language text in English or Tamil.
+3. **Entity Extraction**: `intent_parser.py` extracts intent (`WITHDRAWAL`, `DEPOSIT`, `BALANCE_ENQUIRY`, `SEND_MONEY`) and numerical currency values (handling multipliers like *lakh*, *thousand*, *ஆயிரம்*).
+4. **Backend FSM Validation**: Dispatched to Banking API (`POST /api/v1/voice-intent`) to update session state machine.
+
+### D. QR & Security Flow
+1. **Payload Generation**: Banking API dispatches validated transaction parameters to Security Service (`POST /sign`).
+2. **HMAC-SHA256 Signing**: Security Service generates a cryptographically random UUIDv4 token ID, builds a deterministic JSON token payload, and signs with a 256-bit secret key.
+3. **One-Time Session Store**: Token cached in memory with a 1800-second TTL.
+4. **Base64 QR Encoding**: Emitted to Customer Kiosk as a scannable QR payload.
+
+### E. Teller Workflow & Receipt Lifecycle
+1. **Queue Notification**: Real-time push via WebSocket (`/ws/dashboard`) alerts teller to pending customer tokens.
+2. **QR Verification**: Teller scans printed or mobile QR code via counter webcam or file upload (`POST /api/v1/token/verify-qr`).
+3. **One-Time Consumption**: Backend verifies HMAC signature, confirms expiry window, and invalidates the token against replay attacks.
+4. **Transaction Processing**: Teller reviews customer details and clicks **Process Transaction**. Balance updates atomically in `bank_kiosk.db`.
+5. **Teller Acknowledgement Receipt**: Teller prints an official, centered counter acknowledgement receipt for physical branch auditing.
+
+### F. Face Enrollment Workflow
+1. **Physical Passbook Verification**: Dedicated enrollment interface (`/#face-enrollment`) accepts an uploaded passbook image.
+2. **OCR / Demo Fixture Matching**: Windows native OCR or demo fixture SHA-256 matching validates account credentials against customer records.
+3. **Multi-Sample Capture**: Customer captures 4 distinct facial angles (center, slight left, slight right, smile).
+4. **Gallery Enrollment**: 512-d embeddings are normalized and persisted in `bank_kiosk.db`.
 
 ---
 
-## 📷 Face Enrollment Demo & 10 Synthetic Passbooks
+## 5. Technology Stack
 
-To demonstrate registering new bank customers without exposing real personal information, the repository includes an isolated **Face Enrollment Workflow** supported by **10 fictional demo passbook templates**:
-
-### How to Demo Face Enrollment:
-1. Open the Customer Kiosk at `http://localhost:5173/enrollment` (or click "Face Enrollment Demo").
-2. Under **Step 1: Demo Passbook Verification**, click **"Select Demo Passbook"**.
-3. Choose any of the 10 fictional synthetic passbooks (`passbook_01.png` through `passbook_10.png`).
-4. The system automatically reads the passbook metadata (fictional customer name, masked account number, demo branch).
-5. Click **"Verify & Proceed to Face Capture"**.
-6. Under **Step 2: Biometric Face Enrollment**, align your face in the oval guide.
-7. Capture 3 biometric samples. The system extracts ArcFace embeddings and links them to the selected demo account.
-8. Return to the main kiosk page (`http://localhost:5173`). Look at the camera — you will now be recognized under your newly enrolled demo customer identity!
-
-### Resetting Demo Enrollments:
-To clear enrolled biometric vectors back to a fresh state without modifying customer balances, run:
-```cmd
-python reset_demo_face_enrollments.py
-```
-
-### Synthetic Demo Customer Fixtures:
-Located in `demo_fixtures/passbooks/`:
-- `passbook_01.png` — AI Smart Bank (Aarav Sharma)
-- `passbook_02.png` — Bharat National Bank (Diya Patel)
-- `passbook_03.png` — Digital India Bank (Rohan Verma)
-- `passbook_04.png` — Vistara Cooperative Bank (Ananya Iyer)
-- `passbook_05.png` — National Savings Bank (Vikram Malhotra)
-- `passbook_06.png` — Apex Mercantile Bank (Sneha Kulkarni)
-- `passbook_07.png` — Metro Community Bank (Aditya Joshi)
-- `passbook_08.png` — Union Trust Bank (Meera Nambiar)
-- `passbook_09.png` — Heritage Commercial Bank (Kavya Sundaram)
-- `passbook_10.png` — Pratham Rural Bank (Rajesh Khanna)
-
-*All names, bank identities, account numbers, and IFSC codes are 100% synthetic fixtures.*
+| Domain | Technology / Library | Purpose |
+|---|---|---|
+| **Frontends** | React 18, Vite, Lucide Icons, jsPDF, html2canvas | High-performance reactive web interfaces |
+| **Banking API** | FastAPI, Pydantic v2, Transitions FSM, Uvicorn | Session orchestration and account business logic |
+| **Voice Service** | FastAPI, WebSockets, Python Sound Pipeline | Real-time vernacular speech parsing and entity extraction |
+| **Identity Service** | InsightFace (ArcFace), YuNet ONNX, MiniFASNet, OpenCV | Biometric detection, liveness, and face matching |
+| **Security Service** | PyCryptodome, QRCode, Base64 | HMAC-SHA256 signing and one-time token verification |
+| **Data & Storage** | SQLite3 (WAL mode), Fakeredis TCP Broker | ACID persistent database and Redis pub/sub broker |
+| **Automation** | Windows Batch Scripts, PowerShell | Fully portable, location-independent system launcher |
 
 ---
 
-## 🔒 Security Architecture
-
-The kiosk prototype implements multiple defense-in-depth principles:
-- **Biometric Anti-Spoofing**: Prevents presentation attacks using 2D screen replays or paper photographs via MiniFASNet neural evaluation.
-- **Cryptographic QR Signing**: QR payloads are structured with `token_id`, `customer_id`, `amount`, `issued_at`, and `expires_at`, signed using HMAC-SHA256 with 256-bit entropy keys.
-- **Single-Use Nonce Revocation**: Tokens can only be scanned and processed once. Once redeemed at the teller terminal, re-scanning the same QR returns a `"Token Already Used"` error.
-- **Zero Client Secrets**: Frontends (Kiosk and Staff Portal) never possess HMAC keys or direct database access. All verification occurs server-side in Module 5 and Module 3.
-- **Data Protection**: Virtual environments, debug logs, local runtime caches, and private keys are strictly excluded from git tracking.
-
----
-
-## 📁 Repository Structure
+## 6. Repository Structure
 
 ```
 Voice-Assisted-Bank-Kiosk/
 │
-├── AI-Based-Voice-Assisted-Kiosk-Prototype/
-│   ├── data/
-│   │   ├── bank_db.py                         # SQLite ledger schema, customer queries & seed data
-│   │   ├── bank_kiosk.db                      # Local SQLite demonstration database
-│   │   └── sample_passbook.png                # Reference passbook template
-│   ├── module2_voice/
-│   │   ├── server.py                          # Voice AI FastAPI server (Port 8002)
-│   │   └── voice_service.py                   # Intent classification & TTS synthesis
-│   ├── module3_backend/
-│   │   ├── app/                               # Central Backend FastAPI router (Port 8000)
-│   │   ├── tests/                             # Integration tests for transaction state machine
-│   │   └── requirements.txt                   # Backend Python dependencies
-│   ├── module4_face_auth/
-│   │   ├── app/                               # Face Authentication & Enrollment endpoints (Port 8003)
-│   │   ├── models/                            # Biometric neural network ONNX weights
-│   │   │   ├── face_detection_yunet_2023mar.onnx
-│   │   │   ├── 2.7_80x80_MiniFASNetV2.onnx
-│   │   │   ├── 4_0_0_80x80_MiniFASNetV1SE.onnx
-│   │   │   └── buffalo_l/                     # InsightFace ArcFace models (Git LFS tracked)
-│   │   │       ├── w600k_r50.onnx
-│   │   │       └── 1k3d68.onnx
-│   │   └── requirements.txt                   # Face Auth dependencies
-│   ├── module5_security/
-│   │   ├── app.py                             # Security QR verification service (Port 8001)
-│   │   ├── crypto.py                          # HMAC-SHA256 signing and validation routines
-│   │   ├── qr_generator.py                    # Scannable QR code generation
-│   │   └── requirements.txt                   # Cryptography dependencies
-│   └── module6_staff_portal/
-│       ├── src/                               # Teller verification React application (Port 5174)
-│       ├── public/sample_qrs/                 # Test QR codes for demonstration
-│       ├── package.json                       # Staff Portal npm manifest
-│       └── vite.config.js                     # Vite configuration
+├── apps/                                  # Frontend Applications
+│   ├── customer-kiosk/                    # Touchscreen & voice customer terminal (Port 5173)
+│   │   ├── src/                           # React components, screens, services
+│   │   ├── public/                        # Static assets, branding
+│   │   ├── index.html                     # HTML5 template
+│   │   ├── package.json                   # Dependencies: customer-kiosk
+│   │   └── vite.config.js                 # Vite build settings
+│   │
+│   └── teller-portal/                     # Teller counter & QR processing app (Port 5174)
+│       ├── src/                           # React components, QR scanner, queue
+│       ├── public/                        # Static assets, brand icons
+│       ├── index.html                     # HTML5 template
+│       ├── package.json                   # Dependencies: teller-portal
+│       └── vite.config.js                 # Vite build settings
 │
-├── module-repos/
-│   └── Gopika_Module/
-│       ├── src/                               # Customer Kiosk React application (Port 5173)
-│       ├── package.json                       # Customer Kiosk npm manifest
-│       └── vite.config.js                     # Vite configuration
+├── services/                              # Microservices Layer
+│   ├── banking-api/                       # Central Orchestrator & Banking API (Port 8000)
+│   │   ├── app/                           # Routers, FSM, services, session store
+│   │   ├── mocks/                         # Test fixtures & mocks
+│   │   └── requirements.txt               # API dependencies
+│   │
+│   ├── identity/                          # Face Authentication & Anti-Spoofing (Port 8003)
+│   │   ├── app/                           # Face routes, antispoof, db adapter
+│   │   ├── models/                        # ONNX biometric weights (YuNet, MiniFASNet, ArcFace)
+│   │   └── requirements.txt               # Identity dependencies
+│   │
+│   ├── security/                          # Cryptographic Token & QR Service (Port 8001)
+│   │   ├── crypto.py                      # HMAC-SHA256 signing & validation
+│   │   ├── qr_generator.py                # QR matrix generation
+│   │   ├── token_service.py               # Token lifecycle & TTL management
+│   │   └── requirements.txt               # Security dependencies
+│   │
+│   └── voice/                             # Vernacular Voice AI Engine (Port 8002)
+│       ├── intent_parser.py               # Multilingual intent & entity parser
+│       ├── server.py                      # WebSocket & REST server
+│       ├── stt_pipeline.py                # Speech-to-text pipeline
+│       └── tts_pipeline.py                # Text-to-speech engine
 │
-├── demo_fixtures/
-│   ├── manifest.json                          # Metadata linking demo passbooks to mock accounts
-│   └── passbooks/                             # 10 fictional demo passbook templates (01 - 10)
+├── infrastructure/                        # Infrastructure Runners
+│   └── redis/                             # Embedded Redis protocol server (Port 6379)
+│       └── run_redis.py                   # Standalone TCP fake server
 │
-├── .gitattributes                             # Git LFS configuration for large ONNX models
-├── .gitignore                                 # Clean ignore rules excluding node_modules, .venv, etc.
-├── .env.example                               # Service ports and environment template
-├── launcher_service.py                        # Cross-platform microservice orchestration manager
-├── reset_demo_face_enrollments.py             # Reset tool for demo biometric enrollments
-├── run_redis.py                               # Lightweight embedded Redis protocol broker
-├── setup_env.py                               # Automatic Python dependency installer & validator
-├── START_DEMO.bat                             # One-click portable Windows demo launcher
-├── STOP_DEMO.bat                              # One-click portable Windows demo shutdown tool
-└── README.md                                  # Complete documentation & usage guide
+├── data/                                  # Data Layer
+│   ├── database/                          # Persistent SQLite database
+│   │   ├── bank_db.py                     # Database access layer & migrations
+│   │   └── bank_kiosk.db                  # Live SQLite database file
+│   └── demo/                              # Demonstration Assets
+│       ├── manifest.json                  # Authorized test fixtures manifest
+│       └── passbooks/                     # 10 synthetic demo passbook templates
+│
+├── tests/                                 # Automated Test Suites
+│   ├── backend/                           # 107 Unit tests for Banking API & FSM
+│   ├── identity/                          # Face authentication hardening & liveness tests
+│   ├── integration/                       # End-to-end multi-service integration tests
+│   ├── security/                          # HMAC signing and token expiration tests
+│   └── voice/                             # Vernacular speech & entity parsing tests
+│
+├── scripts/                               # Operational & Portable Scripts
+│   ├── START_DEMO.bat                     # Complete one-click portable launcher
+│   ├── STOP_DEMO.bat                      # Graceful shutdown & cleanup script
+│   ├── launcher_service.py                # Python multi-process orchestrator
+│   ├── setup_env.py                       # Automated dependency verification
+│   └── reset_demo_face_enrollments.py     # Biometric reset tool for 10 demo accounts
+│
+├── .env.example                           # Configuration templates
+├── .gitignore                             # Git ignore rules
+├── requirements.txt                       # Unified Python requirements
+└── README.md                              # Complete product documentation
 ```
 
 ---
 
-## 🔧 Troubleshooting
+## 7. Port Allocation
 
-### Camera Not Working in Face Auth or QR Scanner
-- Ensure your browser has camera permissions allowed for `http://localhost:5173` and `http://localhost:5174`.
-- On Windows, check **Settings → Privacy & Security → Camera** to verify desktop apps are allowed to access the camera.
-- Close any other running application (Zoom, Teams, Skype) that may be holding an exclusive hardware lock on the webcam.
-
-### Microphone Not Detected
-- Check browser permissions for microphone access at `http://localhost:5173`.
-- Verify your default recording device in **Windows Sound Settings**.
-
-### Face Authentication Fails or Shows Error
-- Verify Module 4 is healthy by opening `http://127.0.0.1:8003/health` in your browser.
-- Ensure large biometric model files were completely downloaded via Git LFS:
-  ```cmd
-  git lfs pull
-  ```
-- Ensure your face is centered within the camera guide oval with adequate lighting.
-
-### Port Already in Use (`EADDRINUSE` or WinError 10048)
-- Run `STOP_DEMO.bat` to terminate any previous background service processes.
-- Alternatively, check which process is holding the port using:
-  ```cmd
-  netstat -ano | findstr :5173
-  netstat -ano | findstr :8000
-  ```
-  and terminate it via `taskkill /F /PID <PID>`.
-
-### Node / Python Dependencies Missing
-- Run `setup_env.py` using Python to re-verify Python packages:
-  ```cmd
-  python setup_env.py
-  ```
-- Re-run `npm install` inside `module-repos/Gopika_Module` and `AI-Based-Voice-Assisted-Kiosk-Prototype/module6_staff_portal`.
+| Port | Service / Application | Protocol | Description |
+|---|---|---|---|
+| **5173** | Customer Kiosk | HTTP | React customer-facing kiosk interface |
+| **5174** | Teller Portal | HTTP | React operations & QR counter portal |
+| **8000** | Banking API | HTTP / WS | Central orchestrator, FSM, and SQLite layer |
+| **8001** | Security Service | HTTP | HMAC-SHA256 cryptographic signing engine |
+| **8002** | Voice Service | HTTP / WS | Vernacular speech recognition & intent parser |
+| **8003** | Identity Service | HTTP | Facial recognition, liveness, & anti-spoofing |
+| **6379** | Redis Protocol Broker | TCP | Standalone event bus for pub/sub notifications |
 
 ---
 
-## ⚠️ Limitations & Prototype Disclaimer
+## 8. Installation & Setup
 
-- **Demonstration Prototype**: This software is designed exclusively as an academic, engineering, and hackathon demonstration. It is not approved or certified for commercial or production banking transactions.
-- **Synthetic Financial Data**: All account numbers, balances, IFSC codes, customer profiles, and transaction records are fictional mock data stored in local SQLite databases.
-- **Local Deployment**: Designed for local workstation execution (`localhost`). Deployment across wide-area networks would require mutual TLS, external credential vaults, and hardware security modules (HSM) for signing keys.
+### Prerequisites
+- **Operating System**: Windows 10 or Windows 11 (64-bit)
+- **Python**: 3.10 or 3.11 with `python` or `py` in system PATH
+- **Node.js**: Node.js 18+ LTS and npm
+
+### Automated One-Click Launch (Recommended)
+Simply double-click:
+```cmd
+START_DEMO.bat
+```
+The launcher will dynamically:
+1. Detect project paths relative to `%~dp0` without hardcoded absolute paths.
+2. Initialize and verify a portable Python virtual environment (`.venv`).
+3. Verify all required packages and ONNX neural network weights.
+4. Install npm dependencies and build production bundles for both frontends.
+5. Launch all 7 microservices in background threads with health verification.
+6. Automatically launch Google Chrome to `http://localhost:5173` and `http://localhost:5174`.
+
+### Graceful Termination
+To terminate all demo processes cleanly and free allocated ports:
+```cmd
+STOP_DEMO.bat
+```
 
 ---
 
-## 👥 Team Members
+## 9. Demo Accounts & Passbooks
 
-- **Sujith B**
-- **Gokul M**
-- **Sri Harish Kumar S**
-- **Tharnikaa Balakrishnan**
-- **Gopika M**
-- **Jaya Mathanesh C**
+The database is pre-seeded with 10 synthetic demo accounts mapped directly to passbook fixtures located in `data/demo/passbooks/`:
+
+| Customer ID | Account Name | Account Number | Initial Balance | Demo Passbook Fixture |
+|---|---|---|---|---|
+| `demo_cust_001` | Arjun Kumar | `DEMO-100001` | INR 125,000.00 | `passbook_01.png` |
+| `demo_cust_002` | Priya Sharma | `DEMO-100002` | INR 85,000.00 | `passbook_02.png` |
+| `demo_cust_003` | Rahul Verma | `DEMO-100003` | INR 210,000.00 | `passbook_03.png` |
+| `demo_cust_004` | Ananya Reddy | `DEMO-100004` | INR 340,000.00 | `passbook_04.png` |
+| `demo_cust_005` | Karthik Menon | `DEMO-100005` | INR 95,000.00 | `passbook_05.png` |
+| `demo_cust_006` | Meera Nair | `DEMO-100006` | INR 180,000.00 | `passbook_06.png` |
+| `demo_cust_007` | Aditya Rao | `DEMO-100007` | INR 65,000.00 | `passbook_07.png` |
+| `demo_cust_008` | Sneha Iyer | `DEMO-100008` | INR 275,000.00 | `passbook_08.png` |
+| `demo_cust_009` | Vikram Das | `DEMO-100009` | INR 150,000.00 | `passbook_09.png` |
+| `demo_cust_010` | Kavya Krishnan | `DEMO-100010` | INR 315,000.00 | `passbook_10.png` |
+
+To reset demo biometric face enrollments back to un-enrolled state without wiping customer balances:
+```cmd
+py -3 scripts/reset_demo_face_enrollments.py
+```
+
+---
+
+## 10. Automated Testing
+
+The repository contains multi-layer test suites covering unit logic, cryptographic contracts, and live microservice integration:
+
+```bash
+# Run 107 Banking API unit and FSM state machine tests
+py -3 -m pytest tests/backend
+
+# Run Voice Service vernacular parser unit tests
+py -3 -m unittest tests/voice/test_voice_service.py
+
+# Run Security Service HMAC & token consumption tests
+py -3 -m unittest tests/security/test_security_service.py
+
+# Run Face Authentication capabilities and hardening tests (requires live service on 8003)
+py -3 -m pytest tests/identity/test_face_auth_hardening.py
+
+# Run End-to-End multi-service integration test suite (requires live system)
+py -3 -m pytest tests/integration/test_end_to_end_real.py
+```
+
+---
+
+## 11. Security Considerations
+
+- **HMAC-SHA256 Signature Verification**: QR payloads are verified exclusively on the server side using a secure symmetric signing key.
+- **Single-Use Replay Protection**: Tokens are consumed atomically on first verification; repeated scans are rejected with `ALREADY_USED`.
+- **Account Number Masking**: Account numbers on physical thermal receipts and QR codes are masked (e.g. `3155XXXX` or `DEMO-XXXXX`) to protect customer privacy.
+- **Liveness & Anti-Spoofing Defense**: Real-time passive eye-blink detection combined with MiniFASNet convolutional anti-spoofing filters prevent photo/video replay presentation attacks.
+- **Ephemeral Session Security**: Kiosk state machines enforce strict timeouts and unauthenticated request blocks.
+
+---
+
+## 12. Troubleshooting
+
+| Symptom | Cause | Solution |
+|---|---|---|
+| `Port already in use` | Previous instance not stopped | Run `STOP_DEMO.bat` or kill orphan processes via Task Manager. |
+| `Camera not detected` | Browser camera permissions blocked | Allow camera access in Chrome settings for `http://localhost:5173` and `http://localhost:5174`. |
+| `Audio not transcribing` | Browser microphone permissions blocked | Click camera/microphone icon in URL bar and grant microphone permission. |
+| `Face models missing` | Model weights not downloaded | Verify that all 5 `.onnx` files exist in `services/identity/models/`. |
+| `Missing Python module` | Environment not updated | Run `py -3 scripts/setup_env.py` to auto-install missing packages. |
+
+---
+
+## 13. Team
+
+1. Sujith B
+2. Gokul M
+3. Sri Harish Kumar S
+4. Tharnikaa Balakrishnan
+5. Gopika M
+6. Jaya Mathanesh C
