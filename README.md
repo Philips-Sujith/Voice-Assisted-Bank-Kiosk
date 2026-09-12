@@ -49,7 +49,7 @@ The platform is engineered as an integrated service-oriented architecture compri
 
 ## 4. Team
 
-1. **Sujith B**
+1. **Sujith B** - [GitHub](https://github.com/Philips-Sujith)
 2. **Gokul M** — [GitHub](https://github.com/gokulwm)
 3. **Sri Harish Kumar S** — [GitHub](https://github.com/SriHarishKumar3542)
 4. **Tharnikaa Balakrishnan** — [GitHub](https://github.com/Tharnikaa)
