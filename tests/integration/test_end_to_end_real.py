@@ -230,6 +230,7 @@ def test_09_teller_portal_realtime_websocket_event():
         
         # Connect to staff dashboard websocket
         async with websockets.connect(WS_BACKEND_URL) as ws:
+            await asyncio.sleep(0.5)  # Allow Redis subscription to establish
             # Trigger transaction confirmation
             async with httpx.AsyncClient(timeout=6.0) as client:
                 await client.post(f"{BACKEND_URL}/api/v1/session/start", json={"session_id": session_id})

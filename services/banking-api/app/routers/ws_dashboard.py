@@ -22,6 +22,18 @@ logger = logging.getLogger(__name__)
 _connected_clients: set[WebSocket] = set()
 
 
+async def broadcast_to_dashboards(data: str) -> None:
+    """Broadcast an event payload directly to all connected dashboard websockets."""
+    dead: set[WebSocket] = set()
+    for ws in list(_connected_clients):
+        try:
+            await ws.send_text(data)
+        except Exception:
+            dead.add(ws)
+    for ws in dead:
+        _connected_clients.discard(ws)
+
+
 @router.websocket("/ws/dashboard")
 async def dashboard_websocket(websocket: WebSocket) -> None:
     """

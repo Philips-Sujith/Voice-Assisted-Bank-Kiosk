@@ -43,9 +43,15 @@ async def get_redis() -> aioredis.Redis:  # type: ignore[type-arg]
 
 async def publish_event(event: dict) -> None:
     """Publish a queue lifecycle event dict to the global broadcast channel."""
+    payload = json.dumps(event)
+    try:
+        from app.routers.ws_dashboard import broadcast_to_dashboards
+        await broadcast_to_dashboards(payload)
+    except Exception as exc:
+        logger.debug("In-process dashboard broadcast failed: %s", exc)
+
     try:
         client = await get_redis()
-        payload = json.dumps(event)
         await client.publish(settings.REDIS_QUEUE_CHANNEL, payload)
         logger.info(
             "Published event '%s' (token_id=%s) → channel '%s'",
