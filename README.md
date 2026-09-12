@@ -6,7 +6,7 @@ An enterprise-grade, accessible, service-oriented banking kiosk platform enginee
 
 ## 1. Project Overview
 
-The **AI Voice-Assisted Banking Kiosk** is an integrated omnichannel branch automation solution. It bridges the accessibility gap for elderly, low-literacy, and rural customers who struggle with traditional ATM interfaces or handwritten paper slips.
+The **AI Voice-Assisted Banking Kiosk** is an integrated omnichannel branch automation solution. It bridges the accessibility gap for elderly, low-literacy, and rural customers who struggle with traditional ATM interfaces or handwritten paper deposit and withdrawal slips.
 
 By orchestrating real-time vernacular speech-to-text, natural language intent recognition, on-device facial anti-spoofing biometrics, and HMAC-SHA256 one-time digital transaction tokens, the platform transitions walk-in banking counter encounters from an average of **4 minutes down to under 30 seconds**.
 
@@ -20,126 +20,121 @@ By orchestrating real-time vernacular speech-to-text, natural language intent re
 - **Cryptographic One-Time QR Tokens**: HMAC-SHA256 signed 1800-second expiring payloads preventing tampering, replay attacks, and man-in-the-middle manipulation.
 - **Dual Thermal Receipt Generation**: High-resolution, professional PDF receipts for customer confirmation and teller counter physical audit trails.
 - **Teller Queue Management & Operations Portal**: Instant webcam and file-upload QR scanning with real-time WebSocket queue updates.
-- **Isolated Face Enrollment & OCR Onboarding**: Passbook OCR verification with multi-angle biometric sample enrollment isolated from the public customer kiosk.
+- **Isolated Face Enrollment & Passbook Verification**: Passbook OCR verification with multi-angle biometric sample enrollment isolated from the public customer kiosk.
 
 ---
 
 ## 3. System Architecture
 
-The platform is engineered as an integrated service-oriented architecture with decoupled frontends, domain microservices, an embedded protocol broker, and unified persistent storage.
+The platform is engineered as an integrated service-oriented architecture comprising decoupled frontends, domain microservices, an embedded protocol broker, and unified persistent storage:
 
-```mermaid
-flowchart TD
-    subgraph Frontends["Frontend Applications"]
-        CK["Customer Kiosk\n(Port 5173)\nReact + Vite"]
-        TP["Teller Portal\n(Port 5174)\nReact + Vite"]
-        FE["Face Enrollment\n(Route /#face-enrollment)\nReact + Vite"]
-    end
+### Architecture Tiers
 
-    subgraph Microservices["Backend Services"]
-        BA["Banking API\n(Port 8000)\nFastAPI + Transitions FSM"]
-        IS["Identity Service\n(Port 8003)\nInsightFace + YuNet + AntiSpoof"]
-        SS["Security Service\n(Port 8001)\nHMAC-SHA256 + QR Token Engine"]
-        VS["Voice Service\n(Port 8002)\nVernacular STT + Intent Parser"]
-    end
+| Tier | Components | Protocols / Interfaces | Primary Responsibility |
+|---|---|---|---|
+| **Presentation Tier** | Customer Kiosk (`apps/customer-kiosk`)<br>Teller Operations Portal (`apps/teller-portal`) | React 18, Vite, Web Audio API, WebRTC Camera Stream | Touchscreen customer self-service, vernacular voice interactions, teller counter queue visualization, and QR verification. |
+| **Core Orchestration** | Banking Core API (`services/banking-api`) | FastAPI, Uvicorn, REST, WebSockets, Transitions FSM | Kiosk session lifecycle, finite state machine (FSM) state transitions, biometric auth gates, queue management, and transaction ledger. |
+| **Domain Microservices** | Identity Service (`services/identity`)<br>Voice Service (`services/voice`)<br>Security Service (`services/security`) | REST, WebSocket Audio Stream, ONNX Runtime | Biometric face verification and liveness; vernacular speech recognition and intent parsing; HMAC-SHA256 token issuance and QR generation. |
+| **Event & Data Tier** | Redis Protocol Broker (`infrastructure/redis`)<br>Unified Database (`data/database`)<br>Demo Fixtures (`data/demo`) | Redis Pub/Sub (TCP 6379), SQLite3 (WAL Mode) | Asynchronous event broadcasting for real-time queue synchronization, ACID persistent storage for account balances, transactions, and face embeddings. |
 
-    subgraph Infrastructure["Infrastructure & Data"]
-        RB["Redis Protocol Broker\n(Port 6379)\nPub/Sub Event Bus"]
-        DB[(Unified SQLite Database\nbank_kiosk.db)]
-        FIXTURES["Demo Fixtures\n(10 Synthetic Passbooks)"]
-    end
-
-    %% Customer Flow
-    CK -->|REST /api/v1/session| BA
-    CK -->|REST /face-auth/verify| IS
-    CK -->|WS /ws/audio| VS
-    BA -->|REST /sign| SS
-    BA -->|Pub/Sub Events| RB
-    BA -->|Read / Write| DB
-    IS -->|Vector Match| DB
-
-    %% Teller Flow
-    TP -->|REST /api/v1/token/verify-qr| BA
-    TP -->|WS /ws/dashboard| BA
-    RB -->|Live Events| BA
-
-    %% Enrollment Flow
-    FE -->|REST /face-enrollment/verify-passbook| BA
-    FE -->|REST /face-enrollment/register-samples| BA
-    BA -->|Passbook Assets| FIXTURES
-```
+### Inter-Service Communication Flow
+- **Customer Kiosk to Banking API**: Session initiation, transaction state progression, and customer confirmation via REST (`/api/v1/session/*`).
+- **Customer Kiosk to Identity Service**: Direct camera frame transmission for biometric verification and liveness checks (`/face-auth/verify`).
+- **Customer Kiosk to Voice Service**: Bidirectional raw PCM audio streaming over WebSocket (`/ws/audio`) for real-time transcription and entity extraction.
+- **Banking API to Security Service**: Server-side dispatch to cryptographic engine for deterministic HMAC-SHA256 token signing (`/sign`).
+- **Banking API to Redis Broker**: Event publication (`kiosk:queue:events`) upon transaction confirmation, token call, and completion.
+- **Teller Portal to Banking API**: Real-time queue event consumption over WebSocket (`/ws/dashboard`) and cryptographic QR token validation (`/api/v1/token/verify-qr`).
 
 ---
 
-## 4. Workflows & Lifecycles
+## 4. Team
 
-### A. Customer Journey
-1. **Welcome & Language Selection**: Customer selects preferred vernacular language (English or Tamil) with audio prompts and high-contrast visuals.
-2. **Contactless Biometrics**: Customer looks into the kiosk camera. Identity Service detects the face, tests liveness/anti-spoofing, and identifies the account.
-3. **Conversational Voice Banking**: Customer speaks naturally (e.g., *"Deposit five thousand rupees"* or *"பத்தாயிரம் ரூபாய் டெபாசிட் செய்"*).
-4. **Visual & Auditory Confirmation**: Kiosk displays structured transaction details and requests final touch or voice confirmation.
-5. **Signed QR & Receipt**: Customer receives an HMAC-signed digital QR token on screen with option to print/download the official transaction receipt.
-
-### B. Authentication & Anti-Spoofing Flow
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Customer
-    participant Kiosk as Customer Kiosk
-    participant Identity as Identity Service (Port 8003)
-    participant DB as SQLite bank_kiosk.db
-
-    Customer->>Kiosk: Positions face in front of camera
-    Kiosk->>Identity: POST /face-auth/verify (Base64 JPEG Frame)
-    Identity->>Identity: YuNet Face Detection
-    Identity->>Identity: MiniFASNet Anti-Spoofing Check (> 0.50)
-    Identity->>Identity: Eye-Blink Aspect Ratio (EAR) Liveness Check
-    alt Spoof Detected or No Blink
-        Identity-->>Kiosk: 401 Unauthorized ("Liveness check failed")
-    else Liveness Passed
-        Identity->>Identity: InsightFace 512-d Embedding Extraction
-        Identity->>DB: Cosine Similarity Match across Enrolled Gallery
-        alt Match Score >= 0.60
-            Identity-->>Kiosk: 200 OK (customer_id, display_name, score)
-        else Match Score < 0.60
-            Identity-->>Kiosk: 401 Unauthorized ("Face does not match registered records")
-        end
-    end
-```
-
-### C. Voice Transaction Flow
-1. **Audio Ingestion**: Audio stream captured via Web Audio API and transmitted via `WS /ws/audio` to the Voice Service.
-2. **Vernacular Transcription**: Audio decoded into natural language text in English or Tamil.
-3. **Entity Extraction**: `intent_parser.py` extracts intent (`WITHDRAWAL`, `DEPOSIT`, `BALANCE_ENQUIRY`, `SEND_MONEY`) and numerical currency values (handling multipliers like *lakh*, *thousand*, *ஆயிரம்*).
-4. **Backend FSM Validation**: Dispatched to Banking API (`POST /api/v1/voice-intent`) to update session state machine.
-
-### D. QR & Security Flow
-1. **Payload Generation**: Banking API dispatches validated transaction parameters to Security Service (`POST /sign`).
-2. **HMAC-SHA256 Signing**: Security Service generates a cryptographically random UUIDv4 token ID, builds a deterministic JSON token payload, and signs with a 256-bit secret key.
-3. **One-Time Session Store**: Token cached in memory with a 1800-second TTL.
-4. **Base64 QR Encoding**: Emitted to Customer Kiosk as a scannable QR payload.
-
-### E. Teller Workflow & Receipt Lifecycle
-1. **Queue Notification**: Real-time push via WebSocket (`/ws/dashboard`) alerts teller to pending customer tokens.
-2. **QR Verification**: Teller scans printed or mobile QR code via counter webcam or file upload (`POST /api/v1/token/verify-qr`).
-3. **One-Time Consumption**: Backend verifies HMAC signature, confirms expiry window, and invalidates the token against replay attacks.
-4. **Transaction Processing**: Teller reviews customer details and clicks **Process Transaction**. Balance updates atomically in `bank_kiosk.db`.
-5. **Teller Acknowledgement Receipt**: Teller prints an official, centered counter acknowledgement receipt for physical branch auditing.
-
-### F. Face Enrollment Workflow
-1. **Physical Passbook Verification**: Dedicated enrollment interface (`/#face-enrollment`) accepts an uploaded passbook image.
-2. **OCR / Demo Fixture Matching**: Windows native OCR or demo fixture SHA-256 matching validates account credentials against customer records.
-3. **Multi-Sample Capture**: Customer captures 4 distinct facial angles (center, slight left, slight right, smile).
-4. **Gallery Enrollment**: 512-d embeddings are normalized and persisted in `bank_kiosk.db`.
+1. **Sujith B**
+2. **Gokul M** — [GitHub](https://github.com/gokulwm)
+3. **Sri Harish Kumar S** — [GitHub](https://github.com/SriHarishKumar3542)
+4. **Tharnikaa Balakrishnan** — [GitHub](https://github.com/Tharnikaa)
+5. **Gopika M** — [GitHub](https://github.com/pavigopi2023-commits)
+6. **Jaya Mathanesh C** — [GitHub](https://github.com/jaya-mathanesh)
 
 ---
 
-## 5. Technology Stack
+## 5. Customer Journey & Core Workflow
+
+The end-to-end customer workflow follows a deterministic, state-machine-controlled journey:
+
+1. **Language & Service Selection**: Customer selects English or Tamil on the kiosk touchscreen. Audio prompts guide the user through each step.
+2. **Contactless Biometric Verification**: The customer aligns their face with the on-screen target. The Identity Service verifies liveness and matches the facial vector against enrolled customer records.
+3. **Conversational Voice Request**: The customer speaks naturally into the kiosk microphone (e.g., *"Deposit fifty thousand rupees"* or *"பத்தாயிரம் ரூபாய் டெபாசிட் செய்"*).
+4. **Confirmation & Intent Summary**: The kiosk parses the request, confirms the transaction type and amount, and presents an explicit confirmation screen.
+5. **Token Generation & Scannable QR**: Once confirmed, the Security Service signs the transaction parameters into an HMAC-SHA256 QR token, queued for the teller counter.
+6. **Customer Receipt Issuance**: The customer receives a physical or digital transaction token receipt with timestamp, masked account number, and transaction summary.
+
+---
+
+## 6. Biometric Authentication & Liveness
+
+The Identity Service provides defense-in-depth biometric verification through a multi-stage computer vision pipeline:
+
+### Verification Pipeline
+1. **Face Detection**: Fast YuNet neural network detects the bounding box, facial landmarks, and rotational alignment from camera frames.
+2. **Anti-Spoofing Filter**: MiniFASNet convolutional neural network evaluates texture, depth, and reflection cues to reject printed photographs, screens, and masks (threshold > 0.50).
+3. **Dynamic Liveness (EAR)**: Eye Aspect Ratio (EAR) tracking over consecutive video frames verifies natural eye-blink patterns before authentication is granted.
+4. **Embedding Extraction**: InsightFace (ArcFace ResNet-50) extracts a normalized 512-dimensional facial feature vector.
+5. **Gallery Matching**: Cosine similarity is computed against all stored embeddings for the customer. A similarity score equal to or exceeding 0.60 securely identifies the customer.
+6. **Auth Gate Enforcement**: Financial transactions (withdrawals and deposits) strictly enforce an authenticated session status; unauthenticated requests are halted at the API gateway.
+
+---
+
+## 7. Voice-Assisted Transactions
+
+The Voice Service enables hands-free vernacular transaction specification:
+
+- **Vernacular Audio Pipeline**: Real-time microphone audio is ingested over WebSocket, converted to 16 kHz mono PCM, and transcribed.
+- **Multilingual Support**: Supports English, pure Tamil, and colloquial Tanglish (mixed Tamil and English terms common in daily banking).
+- **Entity & Multiplier Extraction**: Recognizes banking intents (`deposit`, `withdraw`, `balance_inquiry`, `send_money`) and parses complex numerical expressions including vernacular multipliers (*lakh*, *thousand*, *ஆயிரம்*, *கோடி*).
+- **Graceful Intent Degradation**: Requests lacking critical parameters (such as an unspecified amount) prompt targeted voice follow-up queries rather than failing.
+
+---
+
+## 8. Security & Cryptographic Verification
+
+All financial operations follow banking-grade zero-trust principles:
+
+- **HMAC-SHA256 Signing**: Every transaction token is signed using a symmetric 256-bit cryptographic key, binding `token_id`, `session_id`, `customer_id`, `transaction_type`, `amount`, and `expires_at`.
+- **Tamper Detection**: Any modification of QR code payload parameters invalidates the HMAC signature immediately upon scanning.
+- **Single-Use Enforcement**: Tokens are consumed atomically upon teller processing. Once processed, subsequent scan attempts fail with `TOKEN_ALREADY_USED`.
+- **Strict TTL Windows**: Tokens carry a strict 1800-second (30-minute) time-to-live. Expired tokens are marked `EXPIRED` and cannot be processed.
+- **Privacy Masking**: Account numbers are consistently masked across on-screen displays, QR payloads, and printed receipts (e.g., `DEMO-XXXX01`).
+
+---
+
+## 9. Teller Operations Portal
+
+The Teller Portal provides a real-time counter interface for bank staff:
+
+- **Real-Time Queue Visualization**: Listens on WebSocket (`/ws/dashboard`) to display newly issued tokens immediately with queue position and customer details.
+- **Dual-Mode QR Verification**: Supports both counter webcam scanning and image file uploads for scannable QR tokens.
+- **Transaction Processing**: One-click counter processing automatically reconciles account balances in `bank_kiosk.db`.
+- **Teller Audit Receipt**: Generates a standardized, centered teller acknowledgment receipt confirming physical currency exchange for branch audit archives.
+
+---
+
+## 10. Face Enrollment & Passbook Verification
+
+Face registration is isolated in a secure enrollment flow (`/#face-enrollment`) to ensure branch-supervised onboarding:
+
+- **Physical Passbook Verification**: Accepts uploaded passbook images and validates account authenticity via native Windows OCR or demo fixture SHA-256 matching.
+- **Multi-Angle Gallery Registration**: Guides the customer to capture 4 distinct facial samples (center, slight left, slight right, slight smile) to build a robust biometric profile.
+- **Database Persistence**: Embeddings are stored in SQLite `face_embeddings` table linked to the verified customer record.
+
+---
+
+## 11. Technology Stack
 
 | Domain | Technology / Library | Purpose |
 |---|---|---|
 | **Frontends** | React 18, Vite, Lucide Icons, jsPDF, html2canvas | High-performance reactive web interfaces |
-| **Banking API** | FastAPI, Pydantic v2, Transitions FSM, Uvicorn | Session orchestration and account business logic |
+| **Banking Core API** | FastAPI, Pydantic v2, Transitions FSM, Uvicorn | Session orchestration and account business logic |
 | **Voice Service** | FastAPI, WebSockets, Python Sound Pipeline | Real-time vernacular speech parsing and entity extraction |
 | **Identity Service** | InsightFace (ArcFace), YuNet ONNX, MiniFASNet, OpenCV | Biometric detection, liveness, and face matching |
 | **Security Service** | PyCryptodome, QRCode, Base64 | HMAC-SHA256 signing and one-time token verification |
@@ -148,7 +143,7 @@ sequenceDiagram
 
 ---
 
-## 6. Repository Structure
+## 12. Project Structure
 
 ```
 Voice-Assisted-Bank-Kiosk/
@@ -225,21 +220,21 @@ Voice-Assisted-Bank-Kiosk/
 
 ---
 
-## 7. Port Allocation
+## 13. Port Allocation & Endpoints
 
-| Port | Service / Application | Protocol | Description |
-|---|---|---|---|
-| **5173** | Customer Kiosk | HTTP | React customer-facing kiosk interface |
-| **5174** | Teller Portal | HTTP | React operations & QR counter portal |
-| **8000** | Banking API | HTTP / WS | Central orchestrator, FSM, and SQLite layer |
-| **8001** | Security Service | HTTP | HMAC-SHA256 cryptographic signing engine |
-| **8002** | Voice Service | HTTP / WS | Vernacular speech recognition & intent parser |
-| **8003** | Identity Service | HTTP | Facial recognition, liveness, & anti-spoofing |
-| **6379** | Redis Protocol Broker | TCP | Standalone event bus for pub/sub notifications |
+| Port | Service / Application | Protocol | Primary Endpoints | Description |
+|---|---|---|---|---|
+| **5173** | Customer Kiosk | HTTP | `http://localhost:5173` | React customer-facing kiosk interface |
+| **5174** | Teller Portal | HTTP | `http://localhost:5174` | React operations & QR counter portal |
+| **8000** | Banking API | HTTP / WS | `/api/v1/session/*`<br>`/ws/dashboard` | Central orchestrator, FSM, and SQLite layer |
+| **8001** | Security Service | HTTP | `/sign`<br>`/verify` | HMAC-SHA256 cryptographic signing engine |
+| **8002** | Voice Service | HTTP / WS | `/api/v1/parse`<br>`/ws/audio` | Vernacular speech recognition & intent parser |
+| **8003** | Identity Service | HTTP | `/face-auth/verify`<br>`/face-auth/enroll` | Facial recognition, liveness, & anti-spoofing |
+| **6379** | Redis Protocol Broker | TCP | `127.0.0.1:6379` | Standalone event bus for pub/sub notifications |
 
 ---
 
-## 8. Installation & Setup
+## 14. Setup & Installation
 
 ### Prerequisites
 - **Operating System**: Windows 10 or Windows 11 (64-bit)
@@ -251,7 +246,7 @@ Simply double-click:
 ```cmd
 START_DEMO.bat
 ```
-The launcher will dynamically:
+The launcher will automatically:
 1. Detect project paths relative to `%~dp0` without hardcoded absolute paths.
 2. Initialize and verify a portable Python virtual environment (`.venv`).
 3. Verify all required packages and ONNX neural network weights.
@@ -267,7 +262,7 @@ STOP_DEMO.bat
 
 ---
 
-## 9. Demo Accounts & Passbooks
+## 15. Demo Accounts & Passbooks
 
 The database is pre-seeded with 10 synthetic demo accounts mapped directly to passbook fixtures located in `data/demo/passbooks/`:
 
@@ -291,12 +286,12 @@ py -3 scripts/reset_demo_face_enrollments.py
 
 ---
 
-## 10. Automated Testing
+## 16. Automated Testing
 
-The repository contains multi-layer test suites covering unit logic, cryptographic contracts, and live microservice integration:
+The repository contains multi-layer test suites covering unit logic, cryptographic contracts, and live microservice integration (142 total tests):
 
 ```bash
-# Run 107 Banking API unit and FSM state machine tests
+# Run 107 Banking Core API unit and FSM state machine tests
 py -3 -m pytest tests/backend
 
 # Run Voice Service vernacular parser unit tests
@@ -310,21 +305,24 @@ py -3 -m pytest tests/identity/test_face_auth_hardening.py
 
 # Run End-to-End multi-service integration test suite (requires live system)
 py -3 -m pytest tests/integration/test_end_to_end_real.py
+
+# Run Full System Integration test suite
+py -3 -m pytest tests/integration/test_system_integration.py
 ```
 
 ---
 
-## 11. Security Considerations
+## 17. Security Considerations
 
 - **HMAC-SHA256 Signature Verification**: QR payloads are verified exclusively on the server side using a secure symmetric signing key.
 - **Single-Use Replay Protection**: Tokens are consumed atomically on first verification; repeated scans are rejected with `ALREADY_USED`.
-- **Account Number Masking**: Account numbers on physical thermal receipts and QR codes are masked (e.g. `3155XXXX` or `DEMO-XXXXX`) to protect customer privacy.
-- **Liveness & Anti-Spoofing Defense**: Real-time passive eye-blink detection combined with MiniFASNet convolutional anti-spoofing filters prevent photo/video replay presentation attacks.
+- **Account Number Masking**: Account numbers on physical thermal receipts and QR codes are masked (e.g. `XXXX1234` or `DEMO-XXXX01`) to protect customer privacy.
+- **Liveness & Anti-Spoofing Defense**: Real-time passive eye-blink detection combined with MiniFASNet convolutional anti-spoofing filters prevent photo and screen replay attacks.
 - **Ephemeral Session Security**: Kiosk state machines enforce strict timeouts and unauthenticated request blocks.
 
 ---
 
-## 12. Troubleshooting
+## 18. Troubleshooting
 
 | Symptom | Cause | Solution |
 |---|---|---|
@@ -336,11 +334,15 @@ py -3 -m pytest tests/integration/test_end_to_end_real.py
 
 ---
 
-## 13. Team
+## 19. Limitations & Future Roadmap
 
-1. Sujith B
-2. Gokul M
-3. Sri Harish Kumar S
-4. Tharnikaa Balakrishnan
-5. Gopika M
-6. Jaya Mathanesh C
+### Current Limitations
+- **On-Premise Single Kiosk Setup**: The current architecture is designed for a single kiosk terminal paired with a teller workstation.
+- **Embedded Database Architecture**: Utilizes SQLite with Write-Ahead Logging (WAL) for local branch durability rather than an enterprise distributed relational database.
+- **Simulated Core Banking Ledger**: Demonstrates realistic balance updates and transactions locally; real deployments would connect via ISO 8583 / REST adapters to a core banking system (CBS).
+
+### Future Roadmap
+- **Multimodal Conversational LLM**: Integration of fine-tuned domain-specific banking LLMs for complex inquiries (loan applications, fixed deposit calculations).
+- **Expanded Regional Languages**: Adding support for Hindi, Telugu, Kannada, and Malayalam.
+- **Hardware Integration**: Direct peripheral drivers for physical motorized card readers, cash acceptance modules, and thermal ESC/POS roll printers.
+- **Enterprise Central Management**: Centralized dashboard for managing kiosk fleet deployments, firmware updates, and branch-wide security audits.
