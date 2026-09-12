@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.env
+/run/
+*.key
+module5_security/data/sessions/
+module5_security/qr_output/
+node_modules/
+dist/
+

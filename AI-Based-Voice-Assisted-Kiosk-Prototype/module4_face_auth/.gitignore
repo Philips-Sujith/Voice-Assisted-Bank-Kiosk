@@ -1,0 +1,10 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+app/__pycache__/
+data/*.db
+.idea/
+.vscode/
+Steps.txt
+.venv311/

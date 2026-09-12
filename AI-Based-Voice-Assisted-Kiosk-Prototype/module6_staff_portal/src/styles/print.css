@@ -1,0 +1,236 @@
+@media screen {
+  #print-root {
+    display: none !important;
+  }
+}
+
+@page {
+  size: 80mm auto;
+  margin: 0;
+}
+
+@media print {
+  /* Hide application screen elements completely */
+  #root,
+  .modal-overlay,
+  .no-print {
+    display: none !important;
+  }
+
+  html,
+  body {
+    width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+  }
+
+  #print-root {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
+    padding: 6mm 6mm !important;
+    box-sizing: border-box !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  #print-root * {
+    visibility: visible !important;
+  }
+
+  .thermal-receipt {
+    position: static !important;
+    width: 68mm !important;
+    max-width: 68mm !important;
+    min-height: 0 !important;
+    margin: 0 auto !important;
+    padding: 2mm 0 !important;
+    box-sizing: border-box !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    font-size: 8.5pt !important;
+    line-height: 1.3 !important;
+    overflow: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .thermal-receipt__header {
+    text-align: center !important;
+    margin: 0 0 2.5mm !important;
+    padding: 0 0 2mm !important;
+  }
+
+  .thermal-receipt__bank {
+    font-size: 10.5pt !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    color: #12355B !important;
+  }
+
+  .thermal-receipt__title {
+    margin-top: 1mm !important;
+    font-size: 8pt !important;
+    font-weight: 600 !important;
+    color: #64748B !important;
+  }
+
+  .thermal-receipt__rows {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2mm !important;
+    margin: 2.5mm 0 !important;
+  }
+
+  .thermal-receipt__row {
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 2mm !important;
+    align-items: flex-start !important;
+    font-size: 8pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .thermal-receipt__row span {
+    font-weight: 700 !important;
+    color: #475569 !important;
+    white-space: nowrap !important;
+  }
+
+  .thermal-receipt__row strong {
+    font-weight: 500 !important;
+    color: #0f172a !important;
+    text-align: right !important;
+  }
+
+  .thermal-receipt__row--amount strong {
+    font-size: 9pt !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+  }
+
+  .thermal-receipt__footer {
+    margin-top: 2.5mm !important;
+    text-align: left !important;
+    font-size: 8pt !important;
+  }
+
+  .thermal-receipt__divider {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    color: #CBD5E1 !important;
+    letter-spacing: 1px !important;
+  }
+}
+
+
+/* Screen preview styling. */
+.thermal-receipt {
+  width: 100%;
+  max-width: 330px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px dashed #CBD5E1;
+  color: #111827;
+  border-radius: 4px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+
+.thermal-receipt__header {
+  text-align: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #CBD5E1;
+}
+
+.thermal-receipt__bank {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.thermal-receipt__title {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.thermal-receipt__meta {
+  margin-top: 4px;
+  font-size: 0.68rem;
+  color: #64748B;
+}
+
+.thermal-receipt__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.thermal-receipt__row {
+  display: grid;
+  grid-template-columns: 105px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.thermal-receipt__row span {
+  font-weight: 700;
+}
+
+.thermal-receipt__row strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.thermal-receipt__row--amount {
+  font-size: 0.88rem;
+}
+
+.thermal-receipt__footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #CBD5E1;
+  text-align: center;
+  color: #475569;
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.thermal-receipt__footer strong {
+  display: block;
+  margin: 4px 0;
+  color: #111827;
+}
+
+.thermal-receipt__divider {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.print-status {
+  margin-top: 12px;
+  font-size: 0.78rem;
+  color: #1E4976;
+  text-align: center;
+  font-style: italic;
+}

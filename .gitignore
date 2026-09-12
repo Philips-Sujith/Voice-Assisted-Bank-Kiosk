@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node.js & Frontends
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Build output
+dist/
+build/
+coverage/
+out/
+.next/
+
+# Runtime, logs, and processes
+logs/
+*.log
+tmp/
+temp/
+runtime/
+.runtime/
+demo_pids.json
+.py_setup_done
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.bin
+!*.onnx
+signing_key.bin
+
+# Temporary session data generated at runtime
+**/data/sessions/*.json
+!**/data/sessions/.gitkeep
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Generated receipts, documents, and archives
+*.pdf
+*.zip
+*.rar
+*.7z
+*.tar.gz
+*.bak
+*.swp
+
+# Browser & subagent scratch artifacts
+scratch/
+browser/

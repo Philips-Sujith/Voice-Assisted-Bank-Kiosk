@@ -1,0 +1,115 @@
+{
+  "description": "Demo Passbook Fixtures for Banking Kiosk Testing (DEMO ONLY - NOT PRODUCTION)",
+  "fixtures": [
+    {
+      "file": "passbook_01.png",
+      "customer_id": "demo_cust_001",
+      "customer_name": "Arjun Kumar",
+      "account_number": "DEMO-100001",
+      "bank_name": "AI SMART BANK",
+      "branch": "Connaught Place Branch, New Delhi",
+      "ifsc": "AISB000101",
+      "sha256": "84395214ce5ddc97683cc4fe8515a4f54b6f8db411310d044a081e4f3bd30888",
+      "purpose": "DEMO ONLY"
+    },
+    {
+      "file": "passbook_02.png",
+      "customer_id": "demo_cust_002",
+      "customer_name": "Priya Sharma",
+      "account_number": "DEMO-100002",
+      "bank_name": "BHARAT NATIONAL BANK",
+      "branch": "Nariman Point Branch, Mumbai",
+      "ifsc": "BNBK000202",
+      "sha256": "5459c3e9f51835c994a6e23e47800b48390e1a11d6a15de58f70522446aa98db",
+      "purpose": "DEMO ONLY"
+    },
+    {
+      "file": "passbook_03.png",
+      "customer_id": "demo_cust_003",
+      "customer_name": "Rahul Verma",
+      "account_number": "DEMO-100003",
+      "bank_name": "DIGITAL INDIA BANK",
+      "branch": "Indiranagar Branch, Bengaluru",
+      "ifsc": "DIBK000303",
+      "sha256": "0fee32214457088e42219752992fde382a0b9a578b6456b2aca7bfa4b0e0b212",
+      "purpose": "DEMO ONLY"
+    },
+    {
+      "file": "passbook_04.png",
+      "customer_id": "demo_cust_004",
+      "customer_name": "Ananya Reddy",
+      "account_number": "DEMO-100004",
+      "bank_name": "VISTARA COOPERATIVE BANK",
+      "branch": "Banjara Hills Branch, Hyderabad",
+      "ifsc": "VCBK000404",
+      "sha256": "c083b84f00fa56996044adf93a1f7e99365d64eb26a6b327b67406a8e1a97bfb",
+      "purpose": "DEMO ONLY"
+    },
+    {
+      "file": "passbook_05.png",
+      "customer_id": "demo_cust_005",
+      "customer_name": "Karthik Menon",
+      "account_number": "DEMO-100005",
+      "bank_name": "NATIONAL SAVINGS BANK",
+      "branch": "Anna Nagar Branch, Chennai",
+      "ifsc": "NSBK000505",
+      "sha256": "ae59b6396db6799d9e02d89d199ff4390c84f856e1c32541f0597b247dc8d43c",
+      "purpose": "DEMO ONLY"
+    },
+    {
+      "file": "passbook_06.png",
+      "customer_id": "demo_cust_006",
+      "customer_name": "Meera Nair",
+      "account_number": "DEMO-100006",
+      "bank_name": "HORIZON BANK",
+      "branch": "Park Street Branch, Kolkata",
+      "ifsc": "HZBK000606",
+      "sha256": "4b1444204b8a5db57b1e25f4c017b82205603985ad412114464d62f0de71f834",
+      "purpose": "DEMO ONLY"
+    },
+    {
+      "file": "passbook_07.png",
+      "customer_id": "demo_cust_007",
+      "customer_name": "Aditya Rao",
+      "account_number": "DEMO-100007",
+      "bank_name": "UNITY BANK",
+      "branch": "SG Highway Branch, Ahmedabad",
+      "ifsc": "UNBK000707",
+      "sha256": "9a5dc2dba75362080d5eee930ac269d5d081342665bb20a12ad496b8b2aaa57e",
+      "purpose": "DEMO ONLY"
+    },
+    {
+      "file": "passbook_08.png",
+      "customer_id": "demo_cust_008",
+      "customer_name": "Sneha Iyer",
+      "account_number": "DEMO-100008",
+      "bank_name": "PRIME CITIZENS BANK",
+      "branch": "Shivaji Nagar Branch, Pune",
+      "ifsc": "PCBK000808",
+      "sha256": "62d21f1d906c4f96aee71069af67681827fea59ca253997a321785796f7d6fb3",
+      "purpose": "DEMO ONLY"
+    },
+    {
+      "file": "passbook_09.png",
+      "customer_id": "demo_cust_009",
+      "customer_name": "Vikram Das",
+      "account_number": "DEMO-100009",
+      "bank_name": "SUNRISE BANK",
+      "branch": "MI Road Branch, Jaipur",
+      "ifsc": "SNBK000909",
+      "sha256": "ada9480dbeb443cd595e187b2ffe79bcfecbfdf73f058ede9653c3b0ce3cc3fa",
+      "purpose": "DEMO ONLY"
+    },
+    {
+      "file": "passbook_10.png",
+      "customer_id": "demo_cust_010",
+      "customer_name": "Kavya Krishnan",
+      "account_number": "DEMO-100010",
+      "bank_name": "METRO COOPERATIVE BANK",
+      "branch": "Marine Drive Branch, Kochi",
+      "ifsc": "MCBK001010",
+      "sha256": "e33d204ee5ed96edec2b7ba899816a41efa58b54d3b100db851a824025528fc7",
+      "purpose": "DEMO ONLY"
+    }
+  ]
+}
