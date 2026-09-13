@@ -68,19 +68,21 @@ if defined PYTHON_EXE (
     )
 )
 
-:: Fallback if python or launcher_service is unavailable:
-echo Cleaning up demo services using port matching...
-for %%P in (6379 8001 8003 8000 8002 5174 5173) do (
-    for /f "tokens=5" %%a in ('netstat -a -n -o ^| findstr /r ":%%P\>"') do (
-        if not "%%a"=="0" (
-            echo Stopping process on port %%P (PID %%a)...
-            taskkill /f /t /pid %%a >nul 2>&1
+:: Fallback if python is unavailable: Only terminate tracked PIDs from runtime
+echo Notice: Python environment not found for launcher_service.
+if exist "%PROJECT_ROOT%\runtime\pids" (
+    echo Cleaning up tracked Bank processes...
+    for %%f in ("%PROJECT_ROOT%\runtime\pids\*.json") do (
+        for /f "tokens=2 delims=:, " %%p in ('findstr /i "\"pid\"" "%%f"') do (
+            taskkill /f /t /pid %%p >nul 2>&1
         )
+        del /f /q "%%f" >nul 2>&1
     )
 )
 
 :CLEANUP
 if exist "%PROJECT_ROOT%\runtime\demo_pids.json" del /q "%PROJECT_ROOT%\runtime\demo_pids.json" >nul 2>&1
+
 
 popd
 echo.

@@ -406,6 +406,7 @@ echo   [OK] Teller Portal dependencies ready.
 echo [5/7] Preparing infrastructure...
 
 if not exist "%RUNTIME_DIR%" mkdir "%RUNTIME_DIR%"
+if not exist "%RUNTIME_DIR%\pids" mkdir "%RUNTIME_DIR%\pids"
 if not exist "%RUNTIME_DIR%\logs" mkdir "%RUNTIME_DIR%\logs"
 
 :: Remove stale demo_pids.json if no services from it are actually running
@@ -420,7 +421,17 @@ echo   [OK] Runtime environment and log directory initialized.
 :: ------------------------------------------------------------------------------
 pushd "%PROJECT_ROOT%"
 "%VENV_PY%" -u "%SCRIPTS_DIR%\launcher_service.py" start
+set "LAUNCH_CODE=!ERRORLEVEL!"
 popd
+
+if not "!LAUNCH_CODE!"=="0" (
+    popd
+    echo.
+    echo Demo launcher encountered an issue (Exit code: !LAUNCH_CODE!).
+    pause
+    exit /b !LAUNCH_CODE!
+)
 
 popd
 pause
+
