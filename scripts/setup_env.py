@@ -51,7 +51,6 @@ REQUIRED_IMPORTS = [
 
 OPTIONAL_HEAVY = [
     ("cv2", "opencv-python"),
-    ("mediapipe", "mediapipe"),
     ("insightface", "insightface"),
     ("onnxruntime", "onnxruntime"),
 ]
@@ -94,32 +93,17 @@ def check_and_install_winsdk():
 
 def check_and_install():
     print(f"[Python Env] Verifying Python {sys.version.split()[0]} environment...")
-    missing = []
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(base_dir)
+    req_file = os.path.join(project_root, "requirements.txt")
 
+    missing = []
     for mod_name, pkg_name in REQUIRED_IMPORTS:
         try:
             importlib.import_module(mod_name)
         except ImportError:
             missing.append((mod_name, pkg_name))
 
-    if missing:
-        print(f"[Python Env] Installing {len(missing)} missing packages...")
-        for mod_name, pkg_name in missing:
-            print(f"  -> Installing {pkg_name}...")
-            cmd = [sys.executable, "-m", "pip", "install", "--prefer-binary", pkg_name]
-            res = subprocess.run(cmd, capture_output=True, text=True)
-            if res.returncode != 0:
-                print(f"[ERROR] Failed to install {pkg_name}:")
-                print(res.stderr)
-                sys.exit(1)
-            print(f"  [OK] {pkg_name} installed successfully.")
-    else:
-        print("[Python Env] Core dependencies are satisfied.")
-
-    # Check Windows-specific native OCR (winsdk) safely without compilation
-    check_and_install_winsdk()
-
-    # Check Face Auth dependencies
     face_missing = []
     for mod_name, pkg_name in OPTIONAL_HEAVY:
         try:
@@ -127,19 +111,45 @@ def check_and_install():
         except ImportError:
             face_missing.append((mod_name, pkg_name))
 
-    if face_missing:
-        print("[Python Env] Notice: Installing face authentication dependencies...")
-        for mod_name, pkg_name in face_missing:
-            print(f"  -> Installing {pkg_name}...")
-            cmd = [sys.executable, "-m", "pip", "install", "--prefer-binary", pkg_name]
-            res = subprocess.run(cmd, capture_output=True, text=True)
+    if missing or face_missing:
+        if os.path.isfile(req_file):
+            print(f"[Python Env] Installing dependencies from requirements.txt...")
+            cmd = [sys.executable, "-m", "pip", "install", "--prefer-binary", "-r", req_file]
+            res = subprocess.run(cmd)
             if res.returncode != 0:
-                print(f"[ERROR] Failed to install {pkg_name}:")
-                print(res.stderr)
+                print(f"[ERROR] Failed to install dependencies from {req_file}")
                 sys.exit(1)
-            print(f"  [OK] {pkg_name} installed successfully.")
-    else:
-        print("[Python Env] Face authentication dependencies are satisfied.")
+        else:
+            to_install = missing + face_missing
+            print(f"[Python Env] Installing {len(to_install)} packages...")
+            for mod_name, pkg_name in to_install:
+                print(f"  -> Installing {pkg_name}...")
+                cmd = [sys.executable, "-m", "pip", "install", "--prefer-binary", pkg_name]
+                res = subprocess.run(cmd, capture_output=True, text=True)
+                if res.returncode != 0:
+                    print(f"[ERROR] Failed to install {pkg_name}:")
+                    print(res.stderr)
+                    sys.exit(1)
+                print(f"  [OK] {pkg_name} installed successfully.")
+
+    # Windows native OCR
+    check_and_install_winsdk()
+
+    # Re-verify all imports
+    still_missing = []
+    for mod_name, pkg_name in REQUIRED_IMPORTS + OPTIONAL_HEAVY:
+        try:
+            importlib.import_module(mod_name)
+        except ImportError:
+            still_missing.append((mod_name, pkg_name))
+
+    if still_missing:
+        print("[ERROR] The following packages could not be loaded:")
+        for mod_name, pkg_name in still_missing:
+            print(f"  - {pkg_name} ({mod_name})")
+        sys.exit(1)
+
+    print("[Python Env] Core and face biometric dependencies verified.")
 
     # Check Face Auth model files
     base_dir = os.path.dirname(os.path.abspath(__file__))

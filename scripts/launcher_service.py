@@ -218,7 +218,7 @@ def start_services():
     started_pids: dict[str, int] = {}
     proc_list: list[tuple[dict, subprocess.Popen]] = []
 
-    print("[6/7] Starting backend & frontend services...")
+    print("[6/7] Starting services...")
 
     for svc in SERVICES:
         name = svc["name"]
@@ -255,7 +255,7 @@ def start_services():
     save_pids(started_pids)
 
     # Health check wait loop
-    print("\n[7/7] Waiting for services to become healthy...")
+    print("\n[7/7] Verifying system...")
     time.sleep(2)
 
     all_healthy = True
@@ -296,12 +296,14 @@ def start_services():
         print("Teller Portal:   http://localhost:5174")
         print("")
         print("========================================")
-        print("\nOpening Customer Kiosk in your browser...")
+        print("\nOpening Customer Kiosk and Teller Portal in your browser...")
         try:
             webbrowser.open("http://localhost:5173")
+            time.sleep(1)
+            webbrowser.open("http://localhost:5174")
         except Exception as e:
             print(f"Notice: Could not automatically open browser ({e}).")
-            print("Please manually visit http://localhost:5173")
+            print("Please manually visit http://localhost:5173 and http://localhost:5174")
     else:
         print("\n========================================")
         print("    BANKING KIOSK DEMO — STATUS REPORT  ")

@@ -16,23 +16,30 @@ setlocal EnableExtensions EnableDelayedExpansion
 
 title Banking Kiosk Demo Stopper
 
-:: Determine project root and scripts directory dynamically
 set "CURR_DIR=%~dp0"
 if "%CURR_DIR:~-1%"=="\" if not "%CURR_DIR:~-2%"==":\" set "CURR_DIR=%CURR_DIR:~0,-1%"
 
-if exist "%CURR_DIR%\launcher_service.py" (
-    set "SCRIPTS_DIR=%CURR_DIR%"
-    pushd "%CURR_DIR%\.."
-    set "PROJECT_ROOT=!CD!"
-    popd
-) else if exist "%CURR_DIR%\scripts\launcher_service.py" (
-    set "PROJECT_ROOT=%CURR_DIR%"
-    set "SCRIPTS_DIR=%CURR_DIR%\scripts"
-) else (
-    set "PROJECT_ROOT=%CURR_DIR%"
-    set "SCRIPTS_DIR=%CURR_DIR%"
-)
+if exist "%CURR_DIR%\launcher_service.py" goto :DIR_IN_SCRIPTS
+if exist "%CURR_DIR%\scripts\launcher_service.py" goto :DIR_IN_ROOT
 
+:: Fallback
+set "PROJECT_ROOT=%CURR_DIR%"
+set "SCRIPTS_DIR=%CURR_DIR%"
+goto :PATHS_DONE
+
+:DIR_IN_SCRIPTS
+set "SCRIPTS_DIR=%CURR_DIR%"
+pushd "%CURR_DIR%\.."
+set "PROJECT_ROOT=!CD!"
+popd
+goto :PATHS_DONE
+
+:DIR_IN_ROOT
+set "PROJECT_ROOT=%CURR_DIR%"
+set "SCRIPTS_DIR=%CURR_DIR%\scripts"
+goto :PATHS_DONE
+
+:PATHS_DONE
 pushd "%PROJECT_ROOT%" || (
     echo ERROR: Could not access project directory: "%PROJECT_ROOT%"
     pause
@@ -73,10 +80,7 @@ for %%P in (6379 8001 8003 8000 8002 5174 5173) do (
 )
 
 :CLEANUP
-:: Clean up runtime files
-if exist "%ACTIVE_DIR%\runtime\demo_pids.json" del /q "%ACTIVE_DIR%\runtime\demo_pids.json" >nul 2>&1
 if exist "%PROJECT_ROOT%\runtime\demo_pids.json" del /q "%PROJECT_ROOT%\runtime\demo_pids.json" >nul 2>&1
-if exist "%ACTIVE_DIR%\.runtime\demo_pids.json" del /q "%ACTIVE_DIR%\.runtime\demo_pids.json" >nul 2>&1
 
 popd
 echo.
