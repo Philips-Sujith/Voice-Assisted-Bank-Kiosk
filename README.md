@@ -238,7 +238,7 @@ Voice-Assisted-Bank-Kiosk/
 
 ### Prerequisites
 - **Operating System**: Windows 10 or Windows 11 (64-bit)
-- **Python**: 3.10 or 3.11 with `python` or `py` in system PATH
+- **Python**: **Python 3.11 (64-bit)** recommended (Python 3.10 to 3.12 supported). *Note: Python 3.14/3.13 are not supported by native biometric and Windows binary wheels. Visual Studio / C++ compiler is NOT required.*
 - **Node.js**: Node.js 18+ LTS and npm
 
 ### Automated One-Click Launch (Recommended)
@@ -330,7 +330,7 @@ py -3 -m pytest tests/integration/test_system_integration.py
 | `Camera not detected` | Browser camera permissions blocked | Allow camera access in Chrome settings for `http://localhost:5173` and `http://localhost:5174`. |
 | `Audio not transcribing` | Browser microphone permissions blocked | Click camera/microphone icon in URL bar and grant microphone permission. |
 | `Face models missing` | Model weights not downloaded | Verify that all 5 `.onnx` files exist in `services/identity/models/`. |
-| `Missing Python module` | Environment not updated | Run `py -3 scripts/setup_env.py` to auto-install missing packages. |
+| `Missing Python module` | Environment not updated | Run `.venv\Scripts\python scripts/setup_env.py` to auto-install missing packages. |
 
 ---
 

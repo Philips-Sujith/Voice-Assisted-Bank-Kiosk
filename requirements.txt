@@ -9,6 +9,7 @@ python-multipart>=0.0.9
 python-dotenv>=1.0.0
 jinja2>=3.1.2
 markupsafe>=2.0
+pyttsx3>=2.90
 
 # Finite State Machine & Events
 transitions>=0.9.0
@@ -29,3 +30,6 @@ onnxruntime>=1.16.0
 pypdf>=4.0.0
 psutil>=5.9.0
 pytest>=8.0.0
+
+# Windows Native Capabilities (Prebuilt binary wheel on Python 3.10-3.12, no compilation)
+winsdk==1.0.0b10; sys_platform == "win32" and python_version < "3.13"

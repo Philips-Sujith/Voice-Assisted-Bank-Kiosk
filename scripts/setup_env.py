@@ -1,11 +1,31 @@
 """
 Python Environment Verifier & Safe Dependency Installer
 Checks required dependencies for all Banking Kiosk microservices and installs missing items.
+Ensures zero-compilation portable setup without requiring Visual Studio or C++ compilers.
 """
 import os
 import sys
 import subprocess
 import importlib
+
+# ── 1. Python Version Compatibility Check ─────────────────────────────────────
+# Python 3.11 is the standardized target (Python 3.10 to 3.12 supported).
+# Python 3.14 (and 3.13+) lack prebuilt binary wheels for native biometric and WinRT packages.
+if sys.version_info < (3, 10) or sys.version_info >= (3, 13):
+    print("=" * 78)
+    print(f" [ERROR] INCOMPATIBLE PYTHON VERSION DETECTED: Python {sys.version.split()[0]}")
+    print("=" * 78)
+    print(" This project requires Python 3.11 (Python 3.10 to 3.12 supported).")
+    print(f" Python {sys.version_info.major}.{sys.version_info.minor} is not supported by native biometric and Windows binary wheels.")
+    print("")
+    print(" IMPORTANT:")
+    print("  - Do NOT install Visual Studio, CMake, or C++ build tools.")
+    print("  - Pre-built binary wheels are available for Python 3.11 without any compilation.")
+    print("  - Please run START_DEMO.bat using Python 3.11, or create your .venv using:")
+    print("      py -3.11 -m venv .venv")
+    print("=" * 78)
+    sys.exit(1)
+
 
 REQUIRED_IMPORTS = [
     ("fastapi", "fastapi"),
@@ -22,11 +42,11 @@ REQUIRED_IMPORTS = [
     ("multipart", "python-multipart"),
     ("dotenv", "python-dotenv"),
     ("psutil", "psutil"),
-    ("winsdk", "winsdk"),
     ("PIL", "pillow"),
     ("pypdf", "pypdf"),
     ("jinja2", "jinja2>=3.1.2"),
     ("markupsafe", "markupsafe>=2.0"),
+    ("pyttsx3", "pyttsx3"),
 ]
 
 OPTIONAL_HEAVY = [
@@ -37,8 +57,43 @@ OPTIONAL_HEAVY = [
 ]
 
 
+def check_and_install_winsdk():
+    """
+    Safely checks and installs winsdk on Windows using prebuilt wheels ONLY.
+    Strictly forbids source compilation to avoid requiring Visual Studio / CMake.
+    """
+    if sys.platform != "win32":
+        return
+
+    try:
+        import winsdk
+        print("  [OK] winsdk (Windows native OCR) is already installed.")
+        return
+    except ImportError:
+        pass
+
+    print("  -> Checking Windows native OCR package (winsdk==1.0.0b10)...")
+    cmd = [
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "--prefer-binary",
+        "--only-binary",
+        ":all:",
+        "winsdk==1.0.0b10",
+    ]
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    if res.returncode == 0:
+        print("  [OK] winsdk installed successfully from prebuilt binary wheel.")
+    else:
+        print("  [Notice] Prebuilt wheel for 'winsdk' was not installed.")
+        print("  [Notice] Native passbook image OCR will run in fallback mode.")
+        print("  [Notice] (Demo passbooks, PDF uploads, and all kiosk services are fully operational).")
+
+
 def check_and_install():
-    print("[Python Env] Verifying required Python dependencies...")
+    print(f"[Python Env] Verifying Python {sys.version.split()[0]} environment...")
     missing = []
 
     for mod_name, pkg_name in REQUIRED_IMPORTS:
@@ -51,7 +106,7 @@ def check_and_install():
         print(f"[Python Env] Installing {len(missing)} missing packages...")
         for mod_name, pkg_name in missing:
             print(f"  -> Installing {pkg_name}...")
-            cmd = [sys.executable, "-m", "pip", "install", pkg_name]
+            cmd = [sys.executable, "-m", "pip", "install", "--prefer-binary", pkg_name]
             res = subprocess.run(cmd, capture_output=True, text=True)
             if res.returncode != 0:
                 print(f"[ERROR] Failed to install {pkg_name}:")
@@ -60,6 +115,9 @@ def check_and_install():
             print(f"  [OK] {pkg_name} installed successfully.")
     else:
         print("[Python Env] Core dependencies are satisfied.")
+
+    # Check Windows-specific native OCR (winsdk) safely without compilation
+    check_and_install_winsdk()
 
     # Check Face Auth dependencies
     face_missing = []
@@ -73,12 +131,13 @@ def check_and_install():
         print("[Python Env] Notice: Installing face authentication dependencies...")
         for mod_name, pkg_name in face_missing:
             print(f"  -> Installing {pkg_name}...")
-            cmd = [sys.executable, "-m", "pip", "install", pkg_name]
+            cmd = [sys.executable, "-m", "pip", "install", "--prefer-binary", pkg_name]
             res = subprocess.run(cmd, capture_output=True, text=True)
             if res.returncode != 0:
                 print(f"[ERROR] Failed to install {pkg_name}:")
                 print(res.stderr)
                 sys.exit(1)
+            print(f"  [OK] {pkg_name} installed successfully.")
     else:
         print("[Python Env] Face authentication dependencies are satisfied.")
 
